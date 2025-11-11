@@ -1,0 +1,209 @@
+---
+title: "example_analysis"
+format: html
+---
+# Protocol of Ballon d'Or?
+
+The Ballon d'Or, French for "Golden Ball," was first awarded in 1956 by France Football magazine. Originally a European-focused award, it has evolved into global soccer's most prestigious individual honor. Today, it is widely regarded as the highest individual achievement in world football, representing the pinnacle of a player's career.
+
+::: {.column-margin}
+![Winner of Ballon d'Or 2024](image/winner.jpg)
+:::
+
+
+## Audience and Question
+
+While the Ballon d'Or voting process involves media representatives and national team captains from around the world—making outcomes inherently subjective and sometimes seemingly random—the award's prestige remains unquestioned. This very subjectivity creates an intriguing puzzle for soccer enthusiasts: are there underlying patterns or consistent criteria that predict Ballon d'Or success? This analysis aims to use statistical exploration to uncover potential protocols and patterns behind football's most coveted individual prize(mainly revolving age).
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+
+# Load required libraries
+library(tidyverse)
+library(knitr)
+library(DT)
+
+# Load the Ballon d'Or 2024 dataset
+ballon_dor_url <- "https://raw.githubusercontent.com/AshkanNS/NNSoccerData/main/2024%20Ballon%20Dor%20Nominees%20League%20Stats.csv"
+ballon_dor_data <- read_csv(ballon_dor_url, show_col_types = FALSE)
+
+```
+
+## Data Source and Attribution
+
+This analysis utilizes the **2024 Ballon d'Or Nominees League Statistics** dataset, which is publicly available on GitHub:
+
+- **Original Dataset**: [2024 Ballon d'Or Nominees League Stats](https://github.com/AshkanNS/NNSoccerData/blob/main/2024%20Ballon%20Dor%20Nominees%20League%20Stats.csv)
+- **Repository**: [NNSoccerData Collection](https://github.com/AshkanNS/NNSoccerData)
+- **Data Collector**: AshkanNS
+
+The dataset contains comprehensive performance statistics for the 30 players nominated for the 2024 Ballon d'Or award, compiled from various league competitions.
+
+:::{.callout-important}
+## ⚠️ Analytical Disclaimer
+
+This analysis focuses exclusively on the 2024 Ballon d'Or nominee data and therefore represents a single snapshot in time. While we can identify interesting patterns and relationships within this dataset, the findings may not fully capture the broader historical trends or predictive factors that influence Ballon d'Or voting across multiple seasons.
+:::
+
+## Data Dictionary
+
+| Variable | Type | Description |
+|---------|------|-------------|
+| **age** | Numeric | Player’s age in years at the time of the 2024 Ballon d’Or evaluation. Used to analyze age distribution across positions and leagues. |
+| **league** | Categorical | The domestic league in which the player competed (e.g., ENG–Premier League, ESP–La Liga, ITA–Serie A). Used for grouping and faceting in visualizations. |
+| **pos** | Categorical | Player’s listed position (e.g., FW, MF, DF, GK, or combinations such as FW,MF). Recoded into Forward, Midfielder, or Defender/Goalkeeper for analysis. |
+
+
+## Plot1:Age Distribution of 2024 Ballon d'Or Nominees
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=9, fig.height=6}
+
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+# Compute summary statistics for subtitle
+age_stats <- ballon_dor_data %>%
+  summarize(
+    mean_age  = round(mean(age, na.rm = TRUE), 1),
+    median_age = round(median(age, na.rm = TRUE), 1),
+    min_age   = min(age, na.rm = TRUE),
+    max_age   = max(age, na.rm = TRUE),
+    total_players = n()
+  )
+
+# Create histogram
+ggplot(ballon_dor_data, aes(x = age)) +
+  geom_histogram(
+    binwidth = 1,
+    fill = "#1E88E5",
+    color = "white",
+    linewidth = 0.3,
+    alpha = 0.85
+  ) +
+  geom_vline(
+    xintercept = age_stats$mean_age,
+    color = "#FF6B00",
+    linewidth = 1.1,
+    linetype = "dashed"
+  ) +
+  labs(
+    title = "Age Distribution of 2024 Ballon d'Or Nominees",
+    subtitle = paste0(
+      "Mean: ", age_stats$mean_age,
+      " yrs | Median: ", age_stats$median_age,
+      " yrs | Range: ", age_stats$min_age, "-", age_stats$max_age,
+      " yrs | Total nominees: ", age_stats$total_players
+    ),
+    x = "Player Age (Years)",
+    y = "Number of Nominees",
+    caption = "Data Source: NNSoccerData GitHub Repository | Dashed line shows mean age"
+  ) +
+  scale_x_continuous(breaks = seq(18, 40, by = 2), limits = c(18, 40)) +
+  theme_minimal(base_size = 12)
+```
+
+## Plot2: Age Distribution of 2024 Ballon d'Or Nominees by League
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=10, fig.height=6}
+
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+# clean data using dplyr + tidyr
+age_league_data <- ballon_dor_data %>%
+  drop_na(age, league) %>%       # tidyr
+  mutate(league = as.factor(league))
+
+age_stats_league <- age_league_data %>%
+  group_by(league) %>%
+  summarize(
+    mean_age = round(mean(age), 1),
+    n_players = n(),
+    .groups = "drop"
+  )
+
+ggplot(age_league_data, aes(x = league, y = age)) +
+  geom_boxplot(fill = "#1E88E5", alpha = 0.7, color = "black") +
+  facet_wrap(~ league, scales = "free_x") +   # faceting
+  labs(
+    title = "Age Distribution of 2024 Ballon d'Or Nominees by League",
+    subtitle = "Each panel shows the distribution of player ages for nominees from that league.",
+    x = "League",
+    y = "Player Age (Years)",
+    caption = "Data Source: NNSoccerData GitHub Repository"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(axis.text.x = element_blank())       # remove repeated labels inside facets
+```
+
+## Plot3:Age Distribution of 2024 Ballon d'Or Nominees by Position (3 groups)
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=10, fig.height=6}
+
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(ggplot2)
+
+scatter_data <- ballon_dor_data %>%
+  mutate(
+    pos3 = case_when(
+      str_detect(pos, "FW")      ~ "Forward",
+      str_detect(pos, "MF")      ~ "Midfielder",
+      str_detect(pos, "DF|GK")   ~ "Defender/Goalkeeper",
+      TRUE                       ~ NA_character_
+    ),
+    pos3   = factor(pos3, levels = c("Forward", "Midfielder", "Defender/Goalkeeper")),
+    league = factor(league)
+  ) %>%
+  drop_na(age, league, pos3) %>%
+  arrange(league, pos3, age)
+
+ggplot(scatter_data, aes(x = league, y = age, color = pos3)) +
+  geom_jitter(width = 0.2, height = 0, alpha = 0.85, size = 2) +
+  scale_color_manual(
+    name   = "Position",
+    values = c(
+      "Forward"              = "#1E88E5",
+      "Midfielder"           = "#FF6B00",
+      "Defender/Goalkeeper"  = "#3CB371"
+    )
+  ) +
+  labs(
+    title = "Age Distribution of 2024 Ballon d'Or Nominees by Position (3 groups)",
+    subtitle = "Forward vs Midfielder vs Defender/Goalkeeper",
+    x = "League",
+    y = "Player Age (years)",
+    caption = "Data Source: NNSoccerData GitHub Repository"
+  ) +
+  theme_minimal(base_size = 12)
+
+```
+::: {.callout-note}
+**Note:** Due to historical and tactical reasons, goalkeepers and defenders are grouped together in the visualization.  
+Both roles are traditionally considered part of a team’s defensive unit, sharing similar responsibilities in preventing goals and maintaining defensive structure.  
+This combined category reflects how these positions are often analyzed collectively in football data and performance studies.
+:::
+## Summary
+
+Overall, the distribution of all nominees follow a uniform distribution, which fits a common sense that
+soccer is not a sport which performance heavily depending on the age.
+However, it changes when classified in positional categories: forwards, midfielders, and defenders/goalkeepers. Forwards tend to be concentrated in the early-to-mid 20s, reflecting the physical explosiveness and pace demanded in attacking roles. Midfielders show a slightly wider spread, with several players extending into their late 20s as experience and tactical awareness play a larger role. Defenders and goalkeepers exhibit the highest ages on average, aligning with the fact that these positions reward positional discipline, decision-making, and accumulated match experience.
+
+## Method
+From tidyr/dply r:<br>
+mutate()<br>
+drop_na()<br>
+group_by()<br>
+summarize()<br>
+arrange()<br>
+
+From ggplot:<br>
+geom_histogram()<br>
+geom_boxplot()<br>
+geom_jitter()<br>
+
+```{r}
+sessionInfo()
+```

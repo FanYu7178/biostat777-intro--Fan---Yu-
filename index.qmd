@@ -1,11 +1,11 @@
 ---
-title: "proj1"
+title: "Home"
 ---
 
-This is a Quarto website.
+# Fan Yu
+Hi, I'm Fan Yu, a big sports fan who loves watching various kinds of sports, including soccer, basketball, and snooker. I also enjoy cooking and playing video games during my vacations.
 
-To learn more about Quarto websites visit <https://quarto.org/docs/websites>.
-
+![my soccer home team](image/city.svg){width=300 fig-alt="my soccer home team"}
 ```{r}
-1 + 1
+
 ```

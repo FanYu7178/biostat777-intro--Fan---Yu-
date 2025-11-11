@@ -1,0 +1,4 @@
+- source: project
+  quarto-pub:
+    - id: 1bbe6e60-0634-4e1f-9fab-d97771c8096b
+      url: https://fyu24.quarto.pub/proj1

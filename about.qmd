@@ -1,9 +1,26 @@
 ---
 title: "About"
+format: html
 ---
 
-About this site
+## About Me
 
-```{r}
-1 + 1
-```
+Hi, welcome to my website. I'm Fan Yu, currently a first year ScM Biostats students at BSPH of JHU. I was major in pure math and minor in CS for bachelor's degree at Tufts University. I haven't determined my research interest yet, which I still attempted to explore, and hope find it in upcoming future. I enjoyed teaching, and have tutor/teaching assistant experience throughout my bachelor's study, and hope to continue gain experience in my master study:)
+
+## Educational Background
+
+-   B.S Tufts University(2021-2025)
+
+-   ScM Johns Hopkins University(2025-current)
+
+## Personal Interest
+
+-   Watching sports
+
+-   Playing ukulele/ guitar
+
+-   Playing video games
+
+-   Cooking
+
+-   Photography
